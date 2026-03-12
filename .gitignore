@@ -1,0 +1,48 @@
+# --- Securitate și Mediu ---
+.env
+.env.local
+.env.*.local
+
+# --- Python & Virtual Environments ---
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# --- Modele AI și Binare Mari (CRITIC PENTRU PUSH) ---
+*.h5
+*.pt
+*.pth
+*.pyd
+*.dll
+*.so
+*.exe
+*.bin
+# Ignoră și fișierele mari din site-packages dacă venv-ul scapă cumva
+**/site-packages/
+
+# --- Baze de Date Locale (RAG) ---
+# Ignoră baza de date vectorială și clonările temporare
+chroma_db/
+storage/
+*.sqlite
+*.db
+
+# --- Frontend (React / Node) ---
+node_modules/
+dist/
+.DS_Store
+
+# --- Build-uri și fișiere de sistem ---
+build/
+develop-eggs/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
