@@ -1,11 +1,20 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import MainLayout from "./components/layout/MainLayout"
 import Home from "./pages/Home"
+import Dashboard from "./pages/Dashboard"
+import Chat from "./pages/Chat"
 
 function App() {
   return (
-    <MainLayout>
-      <Home />
-    </MainLayout>
+    <BrowserRouter>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chat/:repoName" element={<Chat />} />
+        </Routes>
+      </MainLayout>
+    </BrowserRouter>
   )
 }
 

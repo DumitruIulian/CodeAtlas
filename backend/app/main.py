@@ -6,6 +6,7 @@ import os
 
 from app.core.ingestion import process_github_repo
 from app.core.brain import create_vector_store, ask_question_about_code, stream_answer_about_code
+from app.core import history
 
 app = FastAPI(title="AI Source Code Navigator API")
 
@@ -30,6 +31,30 @@ last_repo = None
 @app.get("/")
 def read_root():
     return {"status": "online", "message": "AI Navigator is ready"}
+
+
+@app.get("/api/projects")
+def list_projects():
+    """
+    Returnează lista proiectelor indexate local, folosită de Dashboard.
+    """
+    try:
+        projects = history.get_projects()
+        return {"projects": projects}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats")
+def get_stats():
+    """
+    Returnează statistici agregate pentru Dashboard.
+    """
+    try:
+        stats = history.get_stats()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze")
 async def analyze_code(request: QueryRequest, stream: bool = Query(False)):

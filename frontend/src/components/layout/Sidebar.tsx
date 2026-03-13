@@ -1,5 +1,5 @@
-import { Home, History, Settings, Menu } from "lucide-react"
-import { useState } from "react"
+import { Home, LayoutDashboard, PlusCircle, Settings, Menu } from "lucide-react"
+import { Link, useLocation } from "react-router-dom"
 
 type SidebarProps = {
   isCollapsed: boolean
@@ -7,6 +7,12 @@ type SidebarProps = {
 }
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+  const location = useLocation()
+
+  const isHome = location.pathname === "/"
+  const isDashboard = location.pathname.startsWith("/dashboard")
+  const isIndexNew = location.pathname.startsWith("/index-new")
+
   return (
     <div
       className={`
@@ -32,15 +38,35 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       <div className="flex-1 p-4">
         <nav className="space-y-4 text-gray-300">
-          <div className="flex items-center gap-3 hover:text-white cursor-pointer">
+          <Link
+            to="/"
+            className={`flex items-center gap-3 hover:text-white cursor-pointer ${
+              isHome ? "text-white" : ""
+            }`}
+          >
             <Home size={18} />
-            {!isCollapsed && <span>Dashboard</span>}
-          </div>
+            {!isCollapsed && <span>Home</span>}
+          </Link>
 
-          <div className="flex items-center gap-3 hover:text-white cursor-pointer">
-            <History size={18} />
-            {!isCollapsed && <span>Chat History</span>}
-          </div>
+          <Link
+            to="/dashboard"
+            className={`flex items-center gap-3 hover:text-white cursor-pointer ${
+              isDashboard ? "text-white" : ""
+            }`}
+          >
+            <LayoutDashboard size={18} />
+            {!isCollapsed && <span>Dashboard</span>}
+          </Link>
+
+          <Link
+            to="/index-new"
+            className={`flex items-center gap-3 hover:text-white cursor-pointer ${
+              isIndexNew ? "text-white" : ""
+            }`}
+          >
+            <PlusCircle size={18} />
+            {!isCollapsed && <span>New Analysis</span>}
+          </Link>
 
           <div className="flex items-center gap-3 hover:text-white cursor-pointer">
             <Settings size={18} />

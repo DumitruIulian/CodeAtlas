@@ -9,6 +9,8 @@ from langchain_community.document_loaders.parsers import LanguageParser
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
+from app.core import history
+
 EXCLUDED_DIRS = {"node_modules", "dist", ".git", "venv", "__pycache__"}
 FRONTEND_EXTENSIONS = {".tsx", ".ts", ".jsx", ".js", ".json", ".css"}
 
@@ -315,11 +317,62 @@ def _build_project_summary_file(local_path: str, structure_file_path: str) -> st
     return out_path
 
 
+def _detect_languages_for_repo(local_path: str) -> list[str]:
+    """
+    Derivă limbajele principale folosite în repo pe baza extensiilor de fișiere.
+    Simplu, dar suficient pentru dashboard.
+    """
+    exts: Set[str] = set()
+
+    for root, dirs, files in os.walk(local_path):
+        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
+        for filename in files:
+            ext = os.path.splitext(filename)[1].lower()
+            if ext:
+                exts.add(ext)
+
+    languages: set[str] = set()
+
+    if ".py" in exts:
+        languages.add("Python")
+    if any(e in exts for e in (".ts", ".tsx")):
+        languages.add("TypeScript")
+    if ".js" in exts and "TypeScript" not in languages:
+        languages.add("JavaScript")
+    if ".go" in exts:
+        languages.add("Go")
+    if ".java" in exts:
+        languages.add("Java")
+    if ".rs" in exts:
+        languages.add("Rust")
+
+    # Dacă nu am identificat nimic, folosim un fallback generic
+    if not languages and exts:
+        languages.add("Other")
+
+    return sorted(languages)
+
+
 def process_github_repo(repo_url: str):
     # 1. Stabilim unde salvăm codul descărcat
     # Mergem din folderul 'core' până în rădăcina proiectului, în 'storage'
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    repo_name = repo_url.split("/")[-1].replace(".git", "")
+    # Nume folosit pentru folderul local
+    repo_last_segment = repo_url.split("/")[-1].replace(".git", "")
+    # Nume afişat / folosit în Dashboard & Chat (ex: owner/repo)
+    try:
+        from urllib.parse import urlparse
+
+        parsed = urlparse(repo_url)
+        parts = [p for p in parsed.path.split("/") if p]
+        if len(parts) >= 2:
+            repo_name_for_history = f"{parts[-2]}/{parts[-1].replace('.git', '')}"
+        else:
+            repo_name_for_history = repo_last_segment
+    except Exception:
+        repo_name_for_history = repo_last_segment
+
+    repo_name = repo_last_segment
     local_path = os.path.join(base_dir, "storage", repo_name)
 
     # 2. Clonăm repository-ul de pe GitHub
@@ -424,6 +477,19 @@ def process_github_repo(repo_url: str):
         chunk_overlap=200
     )
     chunks = splitter.split_documents(filtered_documents)
+
+    # 9. Persistăm metadatele proiectului pentru Dashboard / istoric
+    try:
+        languages = _detect_languages_for_repo(local_path)
+        history.add_or_update_project(
+            repo_url=repo_url,
+            repo_name=repo_name_for_history,
+            languages=languages,
+            chunks_count=len(chunks),
+        )
+        print(f"💾 Istoric proiect actualizat pentru {repo_name} ({repo_url})")
+    except Exception as e:
+        print(f"⚠️ Nu am putut salva istoricul proiectului: {e}")
 
     print(
         f"🧩 Rezultat: {len(chunks)} bucățele de cod gata pentru AI "

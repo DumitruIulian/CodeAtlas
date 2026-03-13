@@ -1,12 +1,40 @@
 @import "tailwindcss";
 
+body {
+  @apply bg-slate-950 text-slate-100;
+}
+
 html,
 body {
   overflow-x: hidden;
+  scroll-behavior: smooth;
+
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
 }
 
-body {
-  @apply bg-slate-950 text-slate-100;
+* {
+  scroll-behavior: smooth;
+}
+
+/* Webkit-based scrollbars (Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(51, 65, 85, 0.9); /* slate-700-ish */
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(56, 189, 248, 0.6); /* sky-400/500 glow */
 }
 
 /* Spacing & typography for markdown content (chat responses) */
