@@ -1,5 +1,46 @@
 @import "tailwindcss";
 
+html,
 body {
-  background-color: red !important;
+  overflow-x: hidden;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+/* Spacing & typography for markdown content (chat responses) */
+.prose {
+  @apply leading-relaxed;
+}
+
+.prose h3 {
+  @apply mb-3 mt-1;
+}
+
+.prose p {
+  @apply mb-3;
+}
+
+.prose ul {
+  @apply mb-3 ml-4 list-disc;
+}
+
+.prose li {
+  @apply mb-1;
+}
+
+@keyframes fadeInSoft {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeInSoft 0.2s ease-out;
 }

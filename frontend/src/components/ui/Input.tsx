@@ -3,16 +3,17 @@ type Props = {
   value?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   disabled?: boolean // <--- Adaugă asta
+  className?: string
 }
 
-export default function Input({ placeholder, value, onChange, disabled }: Props) {
+export default function Input({ placeholder, value, onChange, disabled, className }: Props) {
   return (
     <input
       value={value}
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled} // <--- Adaugă asta
-      className="
+      className={`
         w-full
         bg-[#0B1120]
         border border-gray-700
@@ -20,7 +21,8 @@ export default function Input({ placeholder, value, onChange, disabled }: Props)
         p-3
         text-gray-200
         disabled:opacity-50
-      "
+        ${className ?? ""}
+      `}
     />
   )
 }

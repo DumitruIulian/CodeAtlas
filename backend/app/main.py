@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
 
 from app.core.ingestion import process_github_repo
-from app.core.brain import create_vector_store, ask_question_about_code
+from app.core.brain import create_vector_store, ask_question_about_code, stream_answer_about_code
 
 app = FastAPI(title="AI Source Code Navigator API")
 
@@ -31,7 +32,7 @@ def read_root():
     return {"status": "online", "message": "AI Navigator is ready"}
 
 @app.post("/analyze")
-async def analyze_code(request: QueryRequest):
+async def analyze_code(request: QueryRequest, stream: bool = Query(False)):
     global vector_db, last_repo
     print(f"📡 Cerere primită pentru: {request.repoUrl}")
     
@@ -45,14 +46,17 @@ async def analyze_code(request: QueryRequest):
         else:
             print("🧠 Folosim baza de date existentă (Context deja salvat).")
         
-        # Obținem răspunsul de la Groq/Llama 3
+        if stream:
+            print("✅ Streaming răspuns (LangChain astream) ...")
+            return StreamingResponse(
+                stream_answer_about_code(vector_db, request.question),
+                media_type="text/plain; charset=utf-8",
+                headers={"Cache-Control": "no-cache"}
+            )
+
         answer = ask_question_about_code(vector_db, request.question)
-        
         print("✅ Răspuns generat!")
-        return {
-            "status": "success",
-            "answer": answer
-        }
+        return {"status": "success", "answer": answer}
         
     except Exception as e:
         print(f"❌ Eroare: {str(e)}")
