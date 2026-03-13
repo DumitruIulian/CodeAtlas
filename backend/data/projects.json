@@ -1,24 +1,66 @@
 [
   {
-    "url": "https://github.com/DumitruIulian/CodeAtlas.git",
-    "name": "CodeAtlas",
+    "url": "https://github.com/DumitruIulian/IBM-Summer-School-.git",
+    "name": "DumitruIulian/IBM-Summer-School-",
     "languages": [
-      "Python",
-      "TypeScript"
+      "Java"
     ],
-    "chunks": 167,
-    "last_indexed_at": "2026-03-13T17:33:17Z",
-    "last_indexed_unix": 1773415997
-  },
-  {
-    "url": "https://github.com/RaulGavriluta/Vera-AI.git",
-    "name": "RaulGavriluta/Vera-AI",
-    "languages": [
-      "Python",
-      "TypeScript"
-    ],
-    "chunks": 197,
-    "last_indexed_at": "2026-03-13T18:07:29Z",
-    "last_indexed_unix": 1773418049
+    "chunks": 2,
+    "last_indexed_at": "2026-03-13T22:32:23Z",
+    "last_indexed_unix": 1773433943,
+    "health_status": "Security / Bug Risk",
+    "analysis_mermaid": "graph LR\n    subgraph Frontend\n    end\n    subgraph Backend\n        LibraryApplication[Library Application] --> BookController[Book Controller]\n        BookController --> BookService[Book Service]\n        BookService --> BookRepository[Book Repository]\n        BookRepository --> Database[Database]\n        BookService --> SecurityConfig[Security Config]\n    end\n    subgraph Database\n    end\n    subgraph Dependencies\n        BookRepository --> BookRepositoryJPA[Book Repository JPA]\n        BookService --> BookServiceJPA[Book Service JPA]\n        SecurityConfig --> KeycloakRoleMapperConfig[Keycloak Role Mapper Config]\n    end\n    style Frontend fill:#f9f,stroke:#333,stroke-width:4px\n    style Backend fill:#ccc,stroke:#333,stroke-width:4px\n    style Database fill:#aaa,stroke:#333,stroke-width:4px\n    style Dependencies fill:#ddd,stroke:#333,stroke-width:4px",
+    "analysis_hotspots": [
+      {
+        "type": "Security",
+        "file": "library-main/src/main/java/com/practica/library/security/SecurityConfig.java",
+        "reason": "Potential security misconfiguration"
+      },
+      {
+        "type": "Security",
+        "file": "library-main/src/main/java/com/practica/library/security/KeycloakRoleMapperConfig.java",
+        "reason": "Insecure role mapping"
+      },
+      {
+        "type": "Bug",
+        "file": "library-main/src/main/java/com/practica/library/controller/BookController.java",
+        "reason": "Unhandled exceptions"
+      },
+      {
+        "type": "Debt",
+        "file": "library-main/src/main/java/com/practica/library/model/Book.java",
+        "reason": "Outdated or redundant code"
+      },
+      {
+        "type": "Complexity",
+        "file": "library-main/src/main/java/com/practica/library/service/BookServiceJPA.java",
+        "reason": "Overly complex business logic"
+      },
+      {
+        "type": "Clean",
+        "file": "library-main/src/main/java/com/practica/library/util/BookData.java",
+        "reason": "Unused or redundant code"
+      },
+      {
+        "type": "Risk",
+        "file": "library-main/src/main/java/com/practica/library/repository/BookRepositoryJPA.java",
+        "reason": "Potential data inconsistency"
+      },
+      {
+        "type": "Bug",
+        "file": "library-main/src/main/java/com/practica/library/repository/BookRepository.java",
+        "reason": "Unimplemented methods"
+      },
+      {
+        "type": "Debt",
+        "file": "library-main/src/main/java/com/practica/library/model/BookDTO.java",
+        "reason": "Outdated or redundant data transfer object"
+      },
+      {
+        "type": "Complexity",
+        "file": "library-main/src/main/java/com/practica/library/LibraryApplication.java",
+        "reason": "Tight coupling between components"
+      }
+    ]
   }
 ]

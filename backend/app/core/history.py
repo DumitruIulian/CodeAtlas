@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 def _get_base_dir() -> str:
@@ -53,6 +53,13 @@ def add_or_update_project(
     iso_timestamp = now.isoformat(timespec="seconds") + "Z"
     unix_ts = int(now.timestamp())
 
+    # Căutăm proiectul existent (dacă există) pentru a păstra eventualul health_status
+    existing: Optional[Dict[str, Any]] = None
+    for p in projects:
+        if p.get("url") == repo_url:
+            existing = p
+            break
+
     entry = {
         "url": repo_url,
         "name": repo_name,
@@ -61,6 +68,12 @@ def add_or_update_project(
         "last_indexed_at": iso_timestamp,
         "last_indexed_unix": unix_ts,
     }
+
+    # Status inițial de sănătate: dacă există deja unul, îl păstrăm, altfel marcăm ca "Ready for Audit"
+    if existing and "health_status" in existing:
+        entry["health_status"] = existing["health_status"]
+    else:
+        entry["health_status"] = "Ready for Audit"
 
     updated = False
     for idx, project in enumerate(projects):
@@ -75,12 +88,64 @@ def add_or_update_project(
     _write_projects(projects)
 
 
+def compute_health_from_hotspots(hotspots: List[Dict[str, Any]]) -> str:
+    """
+    Derivează un verdict de sănătate din lista de hotspots (tipuri: Security, Bug, Risk, Debt, Complexity, Clean).
+    """
+    if not hotspots:
+        return "Clean Architecture"
+    types_seen = set()
+    for h in hotspots:
+        t = (h.get("type") or h.get("category") or "").strip().lower()
+        if t:
+            types_seen.add(t)
+    if any(x in types_seen for x in ("security", "bug", "risk")):
+        return "Security / Bug Risk"
+    if any(x in types_seen for x in ("debt", "complexity")):
+        return "Technical Debt / Complexity"
+    return "Clean Architecture"
+
+
+def save_project_analysis(
+    repo_url: str,
+    mermaid: str,
+    hotspots: List[Dict[str, Any]],
+    health_status: str,
+) -> None:
+    """
+    Salvează rezultatul analizei (mermaid, hotspots, health_status) în projects.json pentru proiectul dat.
+    """
+    projects = _read_projects()
+    for p in projects:
+        if p.get("url") == repo_url:
+            p["analysis_mermaid"] = mermaid
+            p["analysis_hotspots"] = hotspots
+            p["health_status"] = health_status
+            break
+    _write_projects(projects)
+
+
+def _project_storage_path(repo_url: str) -> str:
+    """Calea către folderul storage al proiectului (storage/<repo_slug>)."""
+    slug = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
+    return os.path.join(_get_storage_dir(), slug)
+
+
 def get_projects() -> List[Dict[str, Any]]:
     """
     Returnează lista de proiecte indexate local, sortată descrescător după data ultimei indexări.
+    Dacă un proiect are status "Ready for Audit" dar are deja analysis_hotspots salvate,
+    recalculează health_status din hotspots.
     """
     projects = _read_projects()
-    projects.sort(key=lambda p: p.get("last_indexed_unix", 0), reverse=True)
+    for p in projects:
+        if not p.get("health_status"):
+            p["health_status"] = "Pending Audit"
+        # Dynamic recovery: dacă e "Ready for Audit" dar avem hotspoturi salvate, derivăm verdictul
+        if p.get("health_status") == "Ready for Audit" and p.get("analysis_hotspots"):
+            p["health_status"] = compute_health_from_hotspots(p["analysis_hotspots"])
+        # Opțional: dacă există PROJ_SUMMARY.txt dar nu avem hotspots, păstrăm "Ready for Audit"
+    projects.sort(key=lambda x: x.get("last_indexed_unix", 0), reverse=True)
     return projects
 
 
@@ -124,4 +189,27 @@ def get_stats() -> Dict[str, Any]:
         "storage_bytes": storage_bytes,
         "api_calls": 0,
     }
+
+
+def get_project_by_id(repo_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Găsește un proiect după identificator:
+    - întâi potrivire exactă pe name
+    - apoi potrivire exactă pe url
+    """
+    projects = _read_projects()
+    for p in projects:
+        if p.get("name") == repo_id:
+            return p
+    for p in projects:
+        if p.get("url") == repo_id:
+            return p
+    return None
+
+
+def reset_projects() -> None:
+    """
+    Golește istoricul proiectelor (projects.json devine un array gol).
+    """
+    _write_projects([])
 

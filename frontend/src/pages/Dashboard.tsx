@@ -10,6 +10,7 @@ type Project = {
   languages: string[]
   chunks: number
   last_indexed_at: string
+  health_status?: string
 }
 
 type Stats = {
@@ -57,49 +58,49 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState<string | null>(null)
 
+  async function loadProjectsAndStats() {
+    const projectsRes = await fetch("http://localhost:8000/api/projects")
+    const statsRes = await fetch("http://localhost:8000/api/stats")
+    if (!projectsRes.ok) throw new Error("Nu am putut încărca lista de proiecte.")
+    if (!statsRes.ok) throw new Error("Nu am putut încărca statisticile.")
+    const projectsJson = await projectsRes.json()
+    const statsJson = await statsRes.json()
+    return { projects: projectsJson.projects ?? [], stats: statsJson as Stats }
+  }
+
   useEffect(() => {
     let cancelled = false
-
     async function load() {
       try {
         setIsLoading(true)
         setIsError(null)
-
-        const [projectsRes, statsRes] = await Promise.all([
-          fetch("http://localhost:8000/api/projects"),
-          fetch("http://localhost:8000/api/stats")
-        ])
-
-        if (!projectsRes.ok) {
-          throw new Error("Nu am putut încărca lista de proiecte.")
-        }
-        if (!statsRes.ok) {
-          throw new Error("Nu am putut încărca statisticile.")
-        }
-
-        const projectsJson = await projectsRes.json()
-        const statsJson = await statsRes.json()
-
+        const { projects, stats: s } = await loadProjectsAndStats()
         if (!cancelled) {
-          setProjects(projectsJson.projects ?? [])
-          setStats(statsJson as Stats)
+          setProjects(projects)
+          setStats(s)
         }
       } catch (err: any) {
-        if (!cancelled) {
-          setIsError(err.message ?? "Eroare la încărcarea datelor din Dashboard.")
-        }
+        if (!cancelled) setIsError(err?.message ?? "Eroare la încărcarea datelor din Dashboard.")
       } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
+        if (!cancelled) setIsLoading(false)
       }
     }
-
     load()
+    return () => { cancelled = true }
+  }, [])
 
-    return () => {
-      cancelled = true
+  // Reîncarcă proiectele la focus ca să vezi verdictul după audit în background sau după chat
+  useEffect(() => {
+    const onFocus = () => {
+      loadProjectsAndStats()
+        .then(({ projects, stats: s }) => {
+          setProjects(projects)
+          setStats(s)
+        })
+        .catch(() => {})
     }
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
   }, [])
 
   const mappedStats = [
@@ -139,7 +140,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/index-new")}
+              onClick={() => navigate("/")}
               className="inline-flex items-center gap-2 rounded-full bg-sky-600 hover:bg-sky-500 text-xs md:text-sm font-semibold text-white px-4 py-2 shadow-lg shadow-sky-500/30 transition-transform hover:scale-[1.02]"
             >
               <span className="text-lg leading-none">＋</span>
@@ -213,7 +214,7 @@ export default function Dashboard() {
                     </p>
                     <Button
                       className="mt-2 px-4 py-2 text-sm font-semibold rounded-full bg-sky-600 hover:bg-sky-500"
-                      onClick={() => navigate("/index-new")}
+                      onClick={() => navigate("/")}
                     >
                       Începe indexarea
                     </Button>
@@ -228,7 +229,33 @@ export default function Dashboard() {
               )}
 
               {!isLoading &&
-                projects.map((repo) => (
+                projects.map((repo) => {
+                  const health = repo.health_status || "Pending Audit"
+                  const isReadyForAudit = health === "Ready for Audit"
+                  const h = health.toLowerCase()
+                  let badgeBg = "bg-slate-500/10"
+                  let badgeText = "text-slate-500"
+                  let badgeBorder = "border-slate-600/60"
+                  if (h.includes("clean")) {
+                    badgeBg = "bg-emerald-500/20"
+                    badgeText = "text-emerald-400"
+                    badgeBorder = "border-emerald-500/40"
+                  } else if (h.includes("risk") || h.includes("bug") || h.includes("security")) {
+                    badgeBg = "bg-red-500/20"
+                    badgeText = "text-red-400"
+                    badgeBorder = "border-red-500/40"
+                  } else if (h.includes("debt") || h.includes("complexity")) {
+                    badgeBg = "bg-amber-500/20"
+                    badgeText = "text-amber-400"
+                    badgeBorder = "border-amber-500/40"
+                  } else if (isReadyForAudit) {
+                    badgeBg = "bg-slate-500/10"
+                    badgeText = "text-slate-500"
+                    badgeBorder = "border-slate-600/60"
+                  }
+                  const badgeAnim = isReadyForAudit ? "animate-pulse" : ""
+
+                  return (
                 <Card
                   key={repo.url}
                   className="bg-slate-900/60 border-slate-800/80 hover:border-purple-500/60 hover:bg-slate-900/90 transition-all duration-200 group cursor-pointer"
@@ -257,6 +284,16 @@ export default function Dashboard() {
                             {lang}
                           </span>
                         ))}
+
+                        <span
+                          className={`
+                            inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold
+                            border ${badgeBorder} ${badgeBg} ${badgeText} ${badgeAnim}
+                          `}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                          <span>{health}</span>
+                        </span>
                       </div>
 
                       <div className="mt-4 flex justify-end">
@@ -272,7 +309,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </Card>
-                ))}
+                )})}
             </div>
           </section>
 

@@ -3,6 +3,7 @@ import MainLayout from "./components/layout/MainLayout"
 import Home from "./pages/Home"
 import Dashboard from "./pages/Dashboard"
 import Chat from "./pages/Chat"
+import Settings from "./pages/Settings"
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chat/:repoName" element={<Chat />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>

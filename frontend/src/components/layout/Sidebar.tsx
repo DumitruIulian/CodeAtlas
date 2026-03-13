@@ -11,7 +11,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const isHome = location.pathname === "/"
   const isDashboard = location.pathname.startsWith("/dashboard")
-  const isIndexNew = location.pathname.startsWith("/index-new")
+  const isSettings = location.pathname.startsWith("/settings")
 
   return (
     <div
@@ -64,19 +64,24 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           </Link>
 
           <Link
-            to="/index-new"
+            to="/"
             className={`flex items-center gap-3 hover:text-white cursor-pointer ${
-              isIndexNew ? "text-white" : ""
+              isHome ? "text-white" : ""
             }`}
           >
             <PlusCircle size={18} />
             {!isCollapsed && <span>New Analysis</span>}
           </Link>
 
-          <div className="flex items-center gap-3 hover:text-white cursor-pointer">
+          <Link
+            to="/settings"
+            className={`flex items-center gap-3 hover:text-white cursor-pointer ${
+              isSettings ? "text-white" : ""
+            }`}
+          >
             <Settings size={18} />
             {!isCollapsed && <span>Settings</span>}
-          </div>
+          </Link>
         </nav>
 
         {!isCollapsed && (

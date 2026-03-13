@@ -77,7 +77,8 @@ export default function Home() {
       // mică întârziere suplimentară pentru a fi siguri că vector DB este stabil
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      navigate(`/chat/${encodeURIComponent(targetName)}`)
+      // după indexare, redirecționăm utilizatorul în Dashboard
+      navigate("/dashboard")
     } catch (error: any) {
       console.error(error)
       alert("Eroare: " + error.message)
