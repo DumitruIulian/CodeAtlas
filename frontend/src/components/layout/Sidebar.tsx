@@ -22,15 +22,20 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         ${isCollapsed ? "w-16" : "w-64"}
       `}
     >
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+      <div
+        className={`
+          flex items-center border-b border-gray-800 h-16
+          ${isCollapsed ? "justify-center px-6" : "justify-between px-6"}
+        `}
+      >
         {!isCollapsed && (
-          <h1 className="text-xl font-bold text-white">
-            CodeAtlas
-          </h1>
+          <span className="text-[11px] font-bold tracking-[0.2em] text-slate-500 uppercase leading-none">
+            Explorer
+          </span>
         )}
         <button
           onClick={onToggle}
-          className="text-gray-300 hover:text-white p-1 rounded-md hover:bg-gray-800 transition"
+          className="relative top-[-1px] text-gray-300 hover:text-white p-1 rounded-md hover:bg-gray-800 transition"
         >
           <Menu size={20} />
         </button>
